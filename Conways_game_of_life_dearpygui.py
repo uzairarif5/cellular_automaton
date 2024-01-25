@@ -6,7 +6,7 @@ import os
 
 '''
 Rules:
-Although the universe is suppose to be infinite, I will be using an [ARRAY_WIDTH] x [ARRAY_WIDTH] looped array. Every cell interacts with its eight neighbours, which are the cells that are horizontally, vertically, or diagonally adjacent. At each step in time, the following transitions occur:
+Although the universe is suppose to be infinite, I will be using an [ARR_W] x [ARR_W] looped array. Every cell interacts with its eight neighbours, which are the cells that are horizontally, vertically, or diagonally adjacent. At each step in time, the following transitions occur:
   - Any live cell with fewer than two live neighbours dies, as if by underpopulation.
   - Any live cell with two or three live neighbours lives on to the next generation.
   - Any live cell with more than three live neighbours dies, as if by overpopulation.
@@ -63,12 +63,13 @@ def playLoop(e: threading.Event):
   while True:
     e.wait()
     startTime = time.time()
-    t = threading.Timer(1/12, nextFrame)
+    t = threading.Thread(target=nextFrame)
     t.start()
     t.join()
     endTime = time.time()
+    while ((endTime-startTime) < 1/12):
+      endTime = time.time()
     print("Time to generate last frame:", endTime - startTime)
-    del t
 
 def nextFrame():
   global universeArr

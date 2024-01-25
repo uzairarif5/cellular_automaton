@@ -1,9 +1,10 @@
+import time
 from tkinter import Canvas, ttk
 import numpy as np
 import tkinter as tk
 import threading
 import os
-from PIL import Image, ImageTk
+from PIL import ImageTk, Image
 
 '''
 Rules:
@@ -18,10 +19,12 @@ ARR_W = 100
 ARR_W_SQ = ARR_W**2
 PIXEL_WIDTH = 4
 CANVAS_W = ARR_W*PIXEL_WIDTH
-threadEvent = threading.Event()
-playThread = None
 universeArr = None
 canvas: Canvas = None
+threadEvent = threading.Event()
+playThread = None
+canvasThread = None
+photoVar = None
 
 def initArrVal():
   global universeArr
@@ -38,21 +41,26 @@ def displayWindow():
   s.configure('My.TFrame', background='dark gray')
   frm = ttk.Frame(root, style='My.TFrame')
   frm.grid(padx=10, pady=10)
-  canvas = tk.Canvas(frm, borderwidth=0, highlightthickness=0, height=CANVAS_W, width=CANVAS_W, background="white")
+  canvas = tk.Canvas(frm, borderwidth=0, highlightthickness=0, height=CANVAS_W, width=CANVAS_W)
   canvas.grid(column=0, row=0, columnspan=2)
-  setCanvas()
+  canvasThread.start()
   ttk.Button(frm, text="Play/Pause", command=setPlay).grid(column=0, row=1, pady=10)
-  ttk.Button(frm, text="Next Frame", command=nextFrameWrapper).grid(column=1, row=1, pady=10)
+  ttk.Button(frm, text="Next Frame", command=nextFrame).grid(column=1, row=1, pady=10)
   root.protocol("WM_DELETE_WINDOW",os.abort)
   root.configure(background='dark gray')
   root.mainloop()
 
-def setCanvas():
-  canvas.create_rectangle(-1, -1, CANVAS_W, CANVAS_W, fill="white")
-  for (y, x) in np.argwhere(universeArr==1):
-    curX = x*4
-    curY = y*4
-    canvas.create_rectangle(curX, curY, curX+PIXEL_WIDTH, curY+PIXEL_WIDTH, fill="black")
+def setCanvasThread():
+  global photoVar
+
+  intermediateArr = np.repeat(universeArr, PIXEL_WIDTH, axis=1).reshape(ARR_W, CANVAS_W)
+  largeArr = np.repeat(intermediateArr, PIXEL_WIDTH, axis=0).reshape(CANVAS_W, CANVAS_W)
+  photoVar =  ImageTk.PhotoImage(image=Image.fromarray(np.logical_not(largeArr)*255))
+  canvas.create_image(0,0, anchor="nw", image=photoVar)
+
+def nextFrame():
+  threadEvent.clear()
+  setNextTimestep()
 
 def setPlay():
   if(threadEvent.is_set()):
@@ -63,22 +71,23 @@ def setPlay():
 def playLoop(e: threading.Event):
   while True:
     e.wait()
-    t = threading.Timer(0.5, nextFrame)
+    startTime = time.time()
+    t = threading.Timer(1/12, setNextTimestep)
     t.start()
     t.join()
-    del t
+    endTime = time.time()
+    print("Time to generate last frame:", endTime - startTime)
 
-def nextFrame():
+def setNextTimestep():
   global universeArr
+  global canvasThread
 
   nextStepV = np.vectorize(nextStep, signature="()->(n)")
-  nextTimeSet = nextStepV(np.arange(ARR_W))
-  universeArr = nextTimeSet
-  setCanvas()
-
-def nextFrameWrapper():
-  threadEvent.clear()
-  nextFrame()
+  nextTimestep = nextStepV(np.arange(ARR_W))
+  canvasThread.join()
+  universeArr = nextTimestep
+  canvasThread = threading.Thread(target=setCanvasThread)
+  canvasThread.start()
 
 def nextStep(curRow):
   nextStepForRowV = np.vectorize(nextStepForRow)
@@ -100,4 +109,5 @@ if __name__ == "__main__":
   initArrVal()
   playThread = threading.Thread(target=playLoop, args=(threadEvent,))
   playThread.start()
+  canvasThread = threading.Thread(target=setCanvasThread)
   displayWindow()

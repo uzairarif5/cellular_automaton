@@ -1,3 +1,4 @@
+import time
 import dearpygui.dearpygui as dpg
 import numpy as np
 import threading
@@ -28,11 +29,15 @@ def initArrVal():
   universeArr[np.random.choice(ARR_W_SQ, ARR_W_SQ//10, replace=False),3] = 0
   universeArr = np.reshape(universeArr,( ARR_W, ARR_W, 4))
 
+def enlargeArrByPixWth(inpArr):
+  intermediateArr = np.repeat(inpArr, PIXEL_WIDTH, axis=1).reshape(ARR_W, CANVAS_W, 4)
+  return np.repeat(intermediateArr, PIXEL_WIDTH, axis=0).reshape(CANVAS_W, CANVAS_W,4)
+
 def displayWindow():
   dpg.create_context()
 
   with dpg.texture_registry():
-    dpg.add_dynamic_texture(ARR_W, ARR_W, universeArr, tag="main_canvas")
+    dpg.add_dynamic_texture(CANVAS_W, CANVAS_W, enlargeArrByPixWth(universeArr), tag="main_canvas")
 
   with dpg.window(tag="Primary Window"):
     with dpg.drawlist(width=CANVAS_W, height=CANVAS_W):
@@ -57,18 +62,20 @@ def setPlay():
 def playLoop(e: threading.Event):
   while True:
     e.wait()
+    startTime = time.time()
     t = threading.Timer(1/12, nextFrame)
     t.start()
     t.join()
+    endTime = time.time()
+    print("Time to generate last frame:", endTime - startTime)
     del t
 
 def nextFrame():
   global universeArr
 
-  nextStepV = np.vectorize(nextStep, signature="()->(m,n)")
-  nextTimeSet = nextStepV(np.arange(ARR_W))
-  universeArr = nextTimeSet
-  dpg.set_value("main_canvas", universeArr)
+  getNextTimeStepVec = np.vectorize(nextStep, signature="()->(m,n)")
+  universeArr = getNextTimeStepVec(np.arange(ARR_W))
+  dpg.set_value("main_canvas", enlargeArrByPixWth(universeArr))
 
 def nextFrameWrapper():
   threadEvent.clear()

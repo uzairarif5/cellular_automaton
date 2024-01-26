@@ -11,6 +11,8 @@ An initial state (time $t = 0$) is selected by assigning a state for each cell. 
 
 ### Updates
 
+<b>update 2.2:</b> In `Conways_game_of_life_tkinter.py` and `maze_tkinter.py`, the canvas now updates image, instead of creating new image every frame.
+
 <b>update 2.1:</b> Added `maze_tkinter.py`.
 
 <b>update 1.2:</b> Added `Conways_game_of_life_dearpygui.py` and `Conways_game_of_life_tkinter.py` which replaces `Conways_game_of_life.py`.

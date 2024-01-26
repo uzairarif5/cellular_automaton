@@ -17,10 +17,12 @@ The module `dearpygui` store a pixel as with four values, I will represent [1,1,
 ARR_W = 100
 ARR_W_SQ = ARR_W**2
 PIXEL_WIDTH = 4
+MAX_FRAME_PER_SEC = 6
 CANVAS_W = ARR_W*PIXEL_WIDTH
 threadEvent = threading.Event()
 playThread = None
 universeArr = None
+canvasImgVar = None
 
 def initArrVal():
   global universeArr
@@ -67,7 +69,7 @@ def playLoop(e: threading.Event):
     t.start()
     t.join()
     endTime = time.time()
-    while ((endTime-startTime) < 1/12):
+    while ((endTime-startTime) < 1/MAX_FRAME_PER_SEC):
       endTime = time.time()
     print("Time to generate last frame:", endTime - startTime)
 

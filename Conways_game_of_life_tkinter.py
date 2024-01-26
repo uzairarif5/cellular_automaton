@@ -19,12 +19,14 @@ ARR_W = 100
 ARR_W_SQ = ARR_W**2
 PIXEL_WIDTH = 4
 CANVAS_W = ARR_W*PIXEL_WIDTH
+MAX_FRAME_PER_SEC = 6
 universeArr = None
 canvas: Canvas = None
 threadEvent = threading.Event()
 playThread = None
 canvasThread = None
 photoVar = None
+canvasImgVar = None
 
 def initArrVal():
   global universeArr
@@ -52,15 +54,21 @@ def displayWindow():
 
 def setCanvasThread():
   global photoVar
+  global canvasImgVar
 
-  intermediateArr = np.repeat(universeArr, PIXEL_WIDTH, axis=1).reshape(ARR_W, CANVAS_W)
+  intermediateArr = np.repeat(np.logical_not(universeArr), PIXEL_WIDTH, axis=1).reshape(ARR_W, CANVAS_W)
   largeArr = np.repeat(intermediateArr, PIXEL_WIDTH, axis=0).reshape(CANVAS_W, CANVAS_W)
-  photoVar =  ImageTk.PhotoImage(image=Image.fromarray(np.logical_not(largeArr)*255))
-  canvas.create_image(0,0, anchor="nw", image=photoVar)
+  photoVar =  ImageTk.PhotoImage(image=Image.fromarray(largeArr*255))
+  if(canvasImgVar == None):
+    canvasImgVar = canvas.create_image(0,0, anchor="nw", image=photoVar)
+  else:
+    canvas.itemconfig(canvasImgVar, image=photoVar)
 
 def nextFrame():
   threadEvent.clear()
+  startTime = time.time()
   setNextTimestep()
+  print("Time to generate last frame:", time.time() - startTime)
 
 def setPlay():
   if(threadEvent.is_set()):
@@ -76,9 +84,9 @@ def playLoop(e: threading.Event):
     t.start()
     t.join()
     endTime = time.time()
-    while ((endTime-startTime) < 1/12):
+    while ((endTime-startTime) < 1/MAX_FRAME_PER_SEC):
       endTime = time.time()
-    print("Time to generate last frame:", endTime - startTime)
+    #print("Time to generate last frame:", endTime - startTime)
 
 def setNextTimestep():
   global universeArr

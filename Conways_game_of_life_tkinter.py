@@ -5,6 +5,7 @@ import tkinter as tk
 import threading
 import os
 from PIL import ImageTk, Image
+import scipy.ndimage
 
 '''
 Rules:
@@ -27,6 +28,8 @@ playThread = None
 canvasThread = None
 photoVar = None
 canvasImgVar = None
+kernel = np.ones((3,3))
+kernel[1,1] = 0
 
 def initArrVal():
   global universeArr
@@ -58,11 +61,12 @@ def setCanvasThread():
 
   intermediateArr = np.repeat(np.logical_not(universeArr), PIXEL_WIDTH, axis=1).reshape(ARR_W, CANVAS_W)
   largeArr = np.repeat(intermediateArr, PIXEL_WIDTH, axis=0).reshape(CANVAS_W, CANVAS_W)
-  photoVar =  ImageTk.PhotoImage(image=Image.fromarray(largeArr*255))
+  newPhoto =  ImageTk.PhotoImage(image=Image.fromarray(largeArr*255))
   if(canvasImgVar == None):
-    canvasImgVar = canvas.create_image(0,0, anchor="nw", image=photoVar)
+    canvasImgVar = canvas.create_image(0,0, anchor="nw", image=newPhoto)
   else:
-    canvas.itemconfig(canvasImgVar, image=photoVar)
+    canvas.itemconfig(canvasImgVar, image=newPhoto)
+  photoVar = newPhoto
 
 def nextFrame():
   threadEvent.clear()
@@ -92,28 +96,12 @@ def setNextTimestep():
   global universeArr
   global canvasThread
 
-  nextStepV = np.vectorize(nextStep, signature="()->(n)")
-  nextTimestep = nextStepV(np.arange(ARR_W))
+  neighboursArr = scipy.ndimage.convolve(universeArr, kernel, mode="wrap")
+  nextTimestep = np.where(neighboursArr == 2, universeArr, neighboursArr == 3)
   canvasThread.join()
   universeArr = nextTimestep
   canvasThread = threading.Thread(target=setCanvasThread)
   canvasThread.start()
-
-def nextStep(curRow):
-  nextStepForRowV = np.vectorize(nextStepForRow)
-  return nextStepForRowV(curRow, np.arange(ARR_W))
-
-def nextStepForRow(curRow, x):
-  a = universeArr
-  neighborsAlive = ( \
-    a[curRow-1,x-1] + a[curRow-1,x] + a[curRow-1,(x+1)%ARR_W] + \
-    a[curRow,x-1] + a[curRow,(x+1)%ARR_W] + \
-    a[(curRow+1)%ARR_W, x-1] + a[(curRow+1)%ARR_W, x] + a[(curRow+1)%ARR_W, (x+1)%ARR_W] \
-  )
-  if universeArr[curRow,x]: #cell alive
-    return 1 if (neighborsAlive==3 or neighborsAlive==2) else 0
-  else: #cell dead
-    return 1 if (neighborsAlive==3) else 0
 
 if __name__ == "__main__":
   initArrVal()

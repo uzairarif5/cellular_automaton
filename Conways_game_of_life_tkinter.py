@@ -1,8 +1,9 @@
-import time
+
 from tkinter import Canvas, ttk
-import numpy as np
 import tkinter as tk
+import numpy as np
 import threading
+import time
 import os
 from PIL import ImageTk, Image
 import scipy.ndimage
@@ -16,14 +17,14 @@ Although the universe is suppose to be infinite, I will be using an [ARR_W] x [A
   - Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 '''
 
-ARR_W = 100
+ARR_W = 150
 ARR_W_SQ = ARR_W**2
 PIXEL_WIDTH = 4
 CANVAS_W = ARR_W*PIXEL_WIDTH
 MAX_FRAME_PER_SEC = 6
+THREAD_EVENT = threading.Event()
 universeArr = None
 canvas: Canvas = None
-threadEvent = threading.Event()
 playThread = None
 canvasThread = None
 photoVar = None
@@ -69,16 +70,16 @@ def setCanvasThread():
   photoVar = newPhoto
 
 def nextFrame():
-  threadEvent.clear()
+  THREAD_EVENT.clear()
   startTime = time.time()
   setNextTimestep()
   print("Time to generate last frame:", time.time() - startTime)
 
 def setPlay():
-  if(threadEvent.is_set()):
-    threadEvent.clear()
+  if(THREAD_EVENT.is_set()):
+    THREAD_EVENT.clear()
   else:
-    threadEvent.set()
+    THREAD_EVENT.set()
 
 def playLoop(e: threading.Event):
   while True:
@@ -105,7 +106,7 @@ def setNextTimestep():
 
 if __name__ == "__main__":
   initArrVal()
-  playThread = threading.Thread(target=playLoop, args=(threadEvent,))
+  playThread = threading.Thread(target=playLoop, args=(THREAD_EVENT,))
   playThread.start()
   canvasThread = threading.Thread(target=setCanvasThread)
   displayWindow()

@@ -10,8 +10,12 @@ An initial state (time $t = 0$) is selected by assigning a state for each cell. 
 - `maze_tkinter.py`: Implements Maze (see [https://conwaylife.com/wiki/OCA:Maze](https://conwaylife.com/wiki/OCA:Maze)) which also has the option for mazectric (by setting the [MAZECTRIC] to True).
 - `larger_than_life.py`: Like `Conways_game_of_life_tkinter.py` but with the option to choose the kernel size, kernel type, survival conditions and birth conditions. The kernel type can be either "Moore" or "Von Neumann". Though the `Larger In Life` algorithm allows you to change the number of states, I have it as a constant of 2. I will implement multiple states in `Lenia.py`.
 - `Lenia.py`: Like `Conways_game_of_life_tkinter.py` but with continuous states, a ring kernel and a smooth growth function. This is not a perfect implementation of Lenia.
+- `Particle_Life/particleLife.py`: This file implements Particle Life
+- `Particle_Life/attractionMatrix.txt`: A matrix used by `particleLife.py`
 
 ### Updates
+
+<b>update 4.1:</b> Added `particleLife.py`.
 
 <b>update 3.1:</b> Added `larger_than_life.py` and `Lenia.py`.
 
